@@ -1,0 +1,12 @@
+{
+	"name": "node-api",
+	"version": "0.0.1",
+	"description" : "Hello World with nodea and mongodb",
+	"private": true,
+	"main": "server.js",
+	"dependencies": {
+		"express": "*",
+		"mongoose": "*",
+		"body-parser": "*"
+	}
+}
