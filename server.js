@@ -8,15 +8,21 @@ var express = require('express'); 		// call express
 var app = express(); 				// define our app using express
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
+var request = require('request');
+var async = require('async');
 
 var Measurement = require('./app/models/measurement');
+var business = require('./app/business/business');
+
+// measurements forwarding endpoints
+var urls = ["http://localhost/api-to-file.php"];
 
 // connect to our database
 mongoose.connect('mongodb://localhost/measurementsdb');
 
 // configure app to use bodyParser()
 // this will let us get the data from a POST
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '10mb'}));
 
 // set our port
 var port = 8080;
@@ -26,10 +32,10 @@ var port = 8080;
 var router = express.Router(); 				// get an instance of the express Router
 
 // middleware to use for all requests
-//router.use(function(req, res, next) {	
-	//console.log('Something is happening.');
-	//next(); // make sure we go to the next routes and don't stop here
-//});
+router.use(function(req, res, next) {	
+	console.log('Something is happening.');
+	next(); // make sure we go to the next routes and don't stop here
+});
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
@@ -38,14 +44,32 @@ router.get('/', function(req, res) {
 
 router.route('/measurements')
 
-	// create a measurement (accessed at POST http://localhost:8080/api/measurements)
-	.post(function(req, res) {		
-		new Measurement(req.body).save(function(err) {
+	// add measurements (accessed at POST http://localhost:8080/api/measurements)
+	.post(function(req, res) {
+		Measurement.collection.insert(req.body, function(err) {
 			if (err)
 				res.send(err);
 
-			res.json({ message: 'Measurement added!' });
-		});		
+			res.json({ message: 'Measurements added!' });
+		});
+		
+		if (urls.length > 0) {
+			var responses = [];		
+			async.each(urls, function(url, callback) {
+				request.post({
+					headers: {'Content-Type' : 'application/json'},
+					url:     url,
+					body:    JSON.stringify(req.body)
+				}, function(err, response, body) {
+					if (err)
+						console.log(err);					
+				});
+				callback();			
+			}, function(err) {
+	  			console.log('Measurements forwarded!');
+			});
+		} else
+			console.log('No urls!');
 	})
 	
 	// get all the measurements (accessed at GET http://localhost:8080/api/measurements)

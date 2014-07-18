@@ -7,6 +7,8 @@
 	"dependencies": {
 		"express": "*",
 		"mongoose": "*",
-		"body-parser": "*"
+		"body-parser": "*",
+		"request": "*",
+		"async": "*"
 	}
 }
