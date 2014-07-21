@@ -8,7 +8,6 @@ var express = require('express'); 		// call express
 var app = express(); 				// define our app using express
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var request = require('request');
 var async = require('async');
 
 var Measurement = require('./app/models/measurement');
@@ -43,7 +42,6 @@ router.get('/', function(req, res) {
 });
 
 router.route('/measurements')
-
 	// add measurements (accessed at POST http://localhost:8080/api/measurements)
 	.post(function(req, res) {
 		Measurement.collection.insert(req.body, function(err) {
@@ -53,23 +51,11 @@ router.route('/measurements')
 			res.json({ message: 'Measurements added!' });
 		});
 		
-		if (urls.length > 0) {
-			var responses = [];		
-			async.each(urls, function(url, callback) {
-				request.post({
-					headers: {'Content-Type' : 'application/json'},
-					url:     url,
-					body:    JSON.stringify(req.body)
-				}, function(err, response, body) {
-					if (err)
-						console.log(err);					
-				});
-				callback();			
-			}, function(err) {
-	  			console.log('Measurements forwarded!');
-			});
-		} else
-			console.log('No urls!');
+		business.forwardMeasurements(urls, req, function() {
+			console.log('Finished forwarding!');
+		});
+			
+		console.log('Done!');	
 	})
 	
 	// get all the measurements (accessed at GET http://localhost:8080/api/measurements)
