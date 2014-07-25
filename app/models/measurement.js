@@ -15,4 +15,4 @@ var MeasurementSchema   = new Schema({
 	value: Number
 });
 
-module.exports = mongoose.model('Measurement', MeasurementSchema);
+module.exports = mongoose.model('Measurement', MeasurementSchema, 'sensor_history');

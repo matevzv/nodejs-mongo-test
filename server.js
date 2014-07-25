@@ -14,10 +14,10 @@ var Measurement = require('./app/models/measurement');
 var business = require('./app/business/business');
 
 // measurements forwarding endpoints
-var urls = ["http://localhost/api-to-file.php"];
+var urls = [];
 
 // connect to our database
-mongoose.connect('mongodb://localhost/measurementsdb');
+mongoose.connect('mongodb://localhost/sms');
 
 // configure app to use bodyParser()
 // this will let us get the data from a POST
