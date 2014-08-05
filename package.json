@@ -6,7 +6,7 @@
 	"main": "server.js",
 	"dependencies": {
 		"express": "*",
-		"mongoose": "*",
+		"mongojs": "*",
 		"body-parser": "*",
 		"request": "*",
 		"async": "*"

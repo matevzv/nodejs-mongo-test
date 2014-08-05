@@ -4,20 +4,19 @@
 // =============================================================================
 
 // call the packages we need
-var express = require('express'); 		// call express
-var app = express(); 				// define our app using express
+var express = require('express');
+var app = express();						// define our app using express
 var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
 var async = require('async');
+var mongojs = require('mongojs');
 
-var Measurement = require('./app/models/measurement');
 var business = require('./app/business/business');
 
 // measurements forwarding endpoints
 var urls = [];
 
 // connect to our database
-mongoose.connect('mongodb://localhost/sms');
+var db = mongojs('measurementsdb', ['measurements']);
 
 // configure app to use bodyParser()
 // this will let us get the data from a POST
@@ -44,23 +43,22 @@ router.get('/', function(req, res) {
 router.route('/measurements')
 	// add measurements (accessed at POST http://localhost:8080/api/measurements)
 	.post(function(req, res) {
-		Measurement.collection.insert(req.body, function(err) {
+		db.measurements.insert(req.body, function(err) {
 			if (err)
 				res.send(err);
 
 			res.json({ message: 'Measurements added!' });
 		});
-		
+	
 		business.forwardMeasurements(urls, req, function() {
 			console.log('Finished forwarding!');
 		});
-			
-		console.log('Done!');	
+		
+		console.log('Done!');
 	})
-	
 	// get all the measurements (accessed at GET http://localhost:8080/api/measurements)
 	.get(function(req, res) {
-		Measurement.find(function(err, measurements) {
+		db.measurements.find(function(err, measurements) {
 			if (err)
 				res.send(err);
 
@@ -73,7 +71,7 @@ router.route('/measurements/:measurement_id')
 	// get the measurement with that id
 	// accessed at GET http://localhost:8080/api/measurement/:measurement_id
 	.get(function(req, res) {
-		Measurement.findById(req.params.measurement_id, function(err, measurement) {
+		db.measurements.findOne({ _id: mongojs.ObjectId(req.params.measurement_id) }, function(err, measurement) {
 			if (err)
 				res.send(err);
 			res.json(measurement);
@@ -83,32 +81,21 @@ router.route('/measurements/:measurement_id')
 	// update the measurement with this id
 	// accessed at PUT http://localhost:8080/api/measurement/:measurement_id
 	.put(function(req, res) {
-
-		// use our measurement model to find the measurement we want
-		Measurement.findById(req.params.measurement_id, function(err, measurement) {
+		db.measurements.update({ _id: mongojs.ObjectId(req.params.measurement_id) }, {$set: req.body}, function(err) {
 			if (err)
 				res.send(err);
-
-			measurement.contextDescription = req.body.contextDescription; 	// update the measurement info
-
-			// save the measurement
-			measurement.save(function(err) {
-				if (err)
-					res.send(err);
-
-				res.json({ message: 'Measurement updated!' });
-			});
-
+			
+			res.json({ message: 'Measurement updated!' });
 		});
 	})
 		
 	// delete the measurement with this id
 	// accessed at DELETE http://localhost:8080/api/measurement/:measurement_id
 	.delete(function(req, res) {
-		Measurement.remove({ _id: req.params.measurement_id }, function(err, measurement) {
+		db.measurements.remove({ _id: mongojs.ObjectId(req.params.measurement_id) }, function(err, measurement) {
 			if (err)
 				res.send(err);
-			else if (measurement)
+			else if (measurement.n)
 				res.json({ message: 'Successfully deleted!' });
 			else
 				res.json({ message: 'Measurement not found!' });
